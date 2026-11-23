@@ -1,0 +1,540 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>إدارة براعم البشائر</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap">
+<style>
+/* Layout: one narrow column (max 760px). Brand line, sticky tab bar, then one view at a time. Cards only for list rows and panels. */
+:root {
+  --bg: #F3F5FA;
+  --surface: #FFFFFF;
+  --ink: #1B2233;
+  --muted: #5B6780;
+  --line: #DCE2EE;
+  --accent: #5A3FD1;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #ECE8FB;
+  --good: #14774F;
+  --good-soft: #DDF2E8;
+  --warn: #8F5B00;
+  --warn-soft: #FBEED0;
+  --bad: #B83232;
+  --bad-soft: #FBE2E2;
+  --font-display: 'Cairo', system-ui, sans-serif;
+  --font-body: 'Tajawal', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10131B; --surface: #181D29; --ink: #E8ECF5; --muted: #9DA8BF; --line: #2A3142;
+    --accent: #9C86FF; --accent-ink: #14102B; --accent-soft: #2A2450;
+    --good: #4FD19A; --good-soft: #15352A; --warn: #F0B94F; --warn-soft: #3A2E12; --bad: #FF8A8A; --bad-soft: #3D1C1C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10131B; --surface: #181D29; --ink: #E8ECF5; --muted: #9DA8BF; --line: #2A3142;
+  --accent: #9C86FF; --accent-ink: #14102B; --accent-soft: #2A2450;
+  --good: #4FD19A; --good-soft: #15352A; --warn: #F0B94F; --warn-soft: #3A2E12; --bad: #FF8A8A; --bad-soft: #3D1C1C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-block: 12px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+#app { max-width: 760px; margin: 0 auto; text-align: right; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; line-height: 1.3; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.brand { display: flex; align-items: center; gap: 12px; padding: 4px 0 14px; }
+.mark { width: 44px; height: 44px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 800 24px var(--font-display); flex: none; }
+.brand h1 { font-size: 22px; }
+.brand p { margin: 0; color: var(--muted); font-size: 14px; }
+
+.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; gap: 4px; background: var(--bg); padding: 6px 0 10px; }
+.tab { flex: 1 1 0; min-width: 0; text-align: center; text-decoration: none; color: var(--muted); font-weight: 700; font-size: 15px; padding: 9px 2px; border-radius: 10px; border: 1px solid transparent; }
+.tab.on { background: var(--surface); color: var(--accent); border-color: var(--line); }
+
+#view { display: flex; flex-direction: column; gap: 16px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.section-title { font-size: 18px; margin-bottom: 4px; }
+.hint { color: var(--muted); font-size: 14px; margin: 0; }
+.date-line { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+.tile .k { color: var(--muted); font-size: 14px; }
+.tile .v { font: 800 28px/1.2 var(--font-display); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.tile .s { color: var(--muted); font-size: 13px; }
+
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.row { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.row .who { min-width: 0; flex: 1 1 200px; }
+.row .who b { font-weight: 700; font-size: 17px; }
+.sub { color: var(--muted); font-size: 14px; display: block; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.chip { background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 0 10px; font-size: 13px; font-weight: 500; }
+.actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.num { font-variant-numeric: tabular-nums; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar > input[type="search"] { flex: 1 1 180px; min-width: 0; }
+input[type="text"], input[type="search"], input[type="number"], input[type="tel"], input[type="date"], select, textarea {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; min-height: 42px; width: 100%;
+}
+.toolbar input, .toolbar select { width: auto; }
+textarea { min-height: 120px; resize: vertical; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; direction: ltr; text-align: left; }
+
+.btn { background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); border-radius: 10px; padding: 8px 16px; min-height: 42px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.btn.sm { min-height: 36px; padding: 5px 12px; font-size: 14px; }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.danger { background: transparent; color: var(--bad); border-color: var(--bad); }
+.btn.danger.sure { background: var(--bad); color: var(--surface); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.pill { display: inline-block; border-radius: 999px; padding: 0 10px; font-size: 13px; font-weight: 700; }
+.pill.paid { background: var(--good-soft); color: var(--good); }
+.pill.part { background: var(--warn-soft); color: var(--warn); }
+.pill.unpaid { background: var(--bad-soft); color: var(--bad); }
+.pill.none { background: var(--accent-soft); color: var(--muted); }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { background: var(--surface); border: 0; padding: 8px 18px; min-height: 42px; font-weight: 700; cursor: pointer; color: var(--muted); }
+.seg button + button { border-inline-start: 1px solid var(--line); }
+.seg button[data-v="p"][aria-pressed="true"] { background: var(--good-soft); color: var(--good); }
+.seg button[data-v="a"][aria-pressed="true"] { background: var(--bad-soft); color: var(--bad); }
+
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.form-grid .full { grid-column: 1 / -1; }
+label.f { display: flex; flex-direction: column; gap: 4px; font-weight: 500; font-size: 14px; }
+.checks { display: flex; flex-wrap: wrap; gap: 8px; }
+.checks label { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 14px; cursor: pointer; }
+
+.notice { border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+.notice.demo { background: var(--warn-soft); color: var(--warn); }
+.notice.err { background: var(--bad-soft); color: var(--bad); }
+.notice p { margin: 0; flex: 1 1 220px; font-weight: 500; }
+
+.bars { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.bar { display: grid; grid-template-columns: 130px minmax(0, 1fr) 28px; gap: 8px; align-items: center; font-size: 14px; }
+.bar i { display: block; height: 8px; border-radius: 99px; background: var(--accent); min-width: 2px; }
+.bar .track { background: var(--accent-soft); border-radius: 99px; }
+
+.pays { width: 100%; display: flex; flex-direction: column; gap: 6px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.pays div { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; }
+.payform { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+.payform input { flex: 1 1 120px; width: auto; min-width: 0; }
+
+.empty { text-align: center; color: var(--muted); padding: 28px 12px; background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; }
+.month-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.month-nav strong { font: 700 18px var(--font-display); }
+
+#toast { position: fixed; inset-inline: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); margin: 0 auto; max-width: 420px; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; text-align: center; font-weight: 500; z-index: 20; opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity .2s, transform .2s; }
+#toast.show { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+@media (max-width: 520px) {
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .bar { grid-template-columns: 100px minmax(0, 1fr) 24px; }
+  .tab { font-size: 14px; }
+}
+</style>
+
+<div id="app" dir="rtl" lang="ar">
+  <div class="brand">
+    <div class="mark" aria-hidden="true">ب</div>
+    <div>
+      <h1>براعم البشائر</h1>
+      <p>إدارة الروضة والمركز · قدسيا</p>
+    </div>
+  </div>
+  <nav class="tabs" aria-label="الأقسام">
+    <a class="tab" data-tab="home" href="#home">الرئيسية</a>
+    <a class="tab" data-tab="children" href="#children">الأطفال</a>
+    <a class="tab" data-tab="attendance" href="#attendance">الحضور</a>
+    <a class="tab" data-tab="fees" href="#fees">الأقساط</a>
+    <a class="tab" data-tab="data" href="#data">البيانات</a>
+  </nav>
+  <main id="view"></main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  var KEY = 'baraem-albashaer-v1';
+  var SECTIONS = [
+    { id: 'am', label: 'الروضة الصباحية' },
+    { id: 'pm', label: 'الرعاية المسائية' },
+    { id: 'edu', label: 'التعليم والتأهيل' },
+    { id: 'sp', label: 'الحالات الخاصة' },
+    { id: 'draw', label: 'دورة الرسم' },
+    { id: 'music', label: 'دورات الموسيقى' },
+    { id: 'nurse', label: 'دورة التمريض' }
+  ];
+  var MONTHS = ['كانون الثاني', 'شباط', 'آذار', 'نيسان', 'أيار', 'حزيران', 'تموز', 'آب', 'أيلول', 'تشرين الأول', 'تشرين الثاني', 'كانون الأول'];
+  var DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  var TABS = ['home', 'children', 'attendance', 'fees', 'data'];
+
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = function (s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  };
+  var pad = function (n) { return String(n).padStart(2, '0'); };
+  var dkey = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  var mkey = function (d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1); };
+  var fmt = function (n) { return Number(n || 0).toLocaleString('en-US'); };
+  var today = new Date();
+  var storageOK = true;
+
+  function parseDay(k) { var p = k.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function dayLabel(k) { var d = parseDay(k); return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear(); }
+  function monthLabel(m) { return MONTHS[+m.slice(5) - 1] + ' ' + m.slice(0, 4); }
+  function shiftMonth(m, delta) { var y = +m.slice(0, 4), mo = +m.slice(5) - 1 + delta; var d = new Date(y, mo, 1); return mkey(d); }
+  function secLabel(id) { var s = SECTIONS.filter(function (x) { return x.id === id; })[0]; return s ? s.label : id; }
+
+  /* ---------- data ---------- */
+  function demoState() {
+    var m = mkey(today), t = dkey(today);
+    var kids = [
+      ['ليان محمد', 4, ['am', 'pm'], 2500, 'أم ليان', '0900000001'],
+      ['عمر خالد', 5, ['am'], 1800, 'أبو عمر', '0900000002'],
+      ['سيلين أحمد', 6, ['edu'], 1500, 'أم سيلين', '0900000003'],
+      ['يوسف حسن', 7, ['sp'], 3000, 'أم يوسف', '0900000004'],
+      ['نور علي', 13, ['draw'], 1200, 'أبو نور', '0900000005'],
+      ['هادي سامر', 8, ['edu', 'music'], 2000, 'أم هادي', '0900000006']
+    ];
+    var children = kids.map(function (k, i) {
+      return { id: i + 1, name: k[0], age: k[1], sections: k[2], fee: k[3], guardian: k[4], phone: k[5], notes: '' };
+    });
+    var att = {}; att[t] = { 1: 'p', 2: 'p', 3: 'a', 4: 'p' };
+    var pay = [
+      { id: 7, cid: 1, m: m, amt: 2500, date: t },
+      { id: 8, cid: 2, m: m, amt: 900, date: t },
+      { id: 9, cid: 5, m: m, amt: 1200, date: t }
+    ];
+    return { demo: true, cur: 'ل.س', children: children, att: att, pay: pay, nid: 10 };
+  }
+  function norm(o) {
+    var children = (Array.isArray(o.children) ? o.children : []).map(function (c) {
+      return { id: +c.id, name: String(c.name || ''), age: +c.age || 0, sections: Array.isArray(c.sections) ? c.sections : [], fee: +c.fee || 0, guardian: String(c.guardian || ''), phone: String(c.phone || ''), notes: String(c.notes || '') };
+    });
+    var pay = (Array.isArray(o.pay) ? o.pay : []).map(function (p) {
+      return { id: +p.id, cid: +p.cid, m: String(p.m), amt: +p.amt || 0, date: String(p.date || '') };
+    });
+    var ids = children.map(function (c) { return c.id; }).concat(pay.map(function (p) { return p.id; }));
+    return { demo: !!o.demo, cur: o.cur ? String(o.cur) : 'ل.س', children: children, att: (o.att && typeof o.att === 'object') ? o.att : {}, pay: pay, nid: Math.max(+o.nid || 0, ids.length ? Math.max.apply(null, ids) + 1 : 1) };
+  }
+  function load() {
+    try { var r = localStorage.getItem(KEY); return r ? norm(JSON.parse(r)) : null; }
+    catch (e) { storageOK = false; return null; }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(S)); }
+    catch (e) { if (storageOK) { storageOK = false; render(); } }
+  }
+  var S = load() || demoState();
+  if (storageOK) save();
+
+  var ui = { tab: 'home', q: '', sec: '', edit: null, delId: null, attDate: dkey(today), attSec: '', feeM: mkey(today), paying: null, delPay: null, reset: false };
+
+  function kidById(id) { return S.children.filter(function (c) { return c.id === id; })[0]; }
+  function paidFor(cid, m) { return S.pay.filter(function (p) { return p.cid === cid && p.m === m; }).reduce(function (a, p) { return a + p.amt; }, 0); }
+  function statusOf(c, m) {
+    var due = +c.fee || 0, paid = paidFor(c.id, m);
+    if (!due) return 'none';
+    if (paid >= due) return 'paid';
+    return paid > 0 ? 'part' : 'unpaid';
+  }
+  var STATUS_TXT = { paid: 'مدفوع', part: 'مدفوع جزئياً', unpaid: 'غير مدفوع', none: 'بدون قسط' };
+  function pill(st) { return '<span class="pill ' + st + '">' + STATUS_TXT[st] + '</span>'; }
+  function chips(c) {
+    return '<span class="chips">' + c.sections.map(function (s) { return '<span class="chip">' + esc(secLabel(s)) + '</span>'; }).join('') + '</span>';
+  }
+  function waLink(c, rem, m) {
+    if (!c.phone) return '';
+    var n = c.phone.replace(/\D/g, '');
+    if (n.indexOf('00') === 0) n = n.slice(2); else if (n.indexOf('0') === 0) n = '963' + n.slice(1);
+    if (n.length < 8) return '';
+    var text = 'السلام عليكم، تذكير من روضة ومركز براعم البشائر: المتبقي على الطفل ' + c.name + ' مبلغ ' + fmt(rem) + ' ' + S.cur + ' عن شهر ' + monthLabel(m) + '. شكراً لتعاونكم.';
+    return '<a class="btn ghost sm" target="_blank" rel="noopener" href="https://wa.me/' + n + '?text=' + encodeURIComponent(text) + '">تذكير واتساب</a>';
+  }
+  var toastTimer;
+  function toast(msg) {
+    var t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2600);
+  }
+
+  /* ---------- views ---------- */
+  function notices() {
+    var h = '';
+    if (S.demo) h += '<div class="notice demo"><p>هذه بيانات تجريبية لتجربة التطبيق. امسحها وابدأ بتسجيل أطفالك.</p><button class="btn sm" data-act="clear-demo">مسح البيانات التجريبية</button></div>';
+    if (!storageOK) h += '<div class="notice err"><p>تعذّر الحفظ على هذا المتصفح، فالبيانات تضيع عند إغلاق الصفحة. انسخ نسخة احتياطية من تبويب «البيانات».</p></div>';
+    return h;
+  }
+
+  function vHome() {
+    var m = mkey(today), t = dkey(today), a = S.att[t] || {};
+    var pres = 0, absn = 0, due = 0, remaining = 0, collected = 0, late = [];
+    S.children.forEach(function (c) {
+      if (a[c.id] === 'p') pres++; else if (a[c.id] === 'a') absn++;
+      var d = +c.fee || 0, p = paidFor(c.id, m);
+      collected += p;
+      if (d) { due += d; if (p < d) { remaining += d - p; late.push({ c: c, rem: d - p }); } }
+    });
+    late.sort(function (x, y) { return y.rem - x.rem; });
+    var total = S.children.length, marked = pres + absn;
+    var h = '<div><div class="date-line">' + dayLabel(t) + '</div></div>';
+    h += '<div class="tiles">' +
+      '<div class="tile"><div class="k">الأطفال المسجلون</div><div class="v">' + total + '</div><div class="s">في جميع الأقسام</div></div>' +
+      '<div class="tile"><div class="k">الحضور اليوم</div><div class="v">' + pres + '<span class="s"> من ' + total + '</span></div><div class="s">' + (marked ? absn + ' غائب' : 'لم يُسجَّل بعد') + '</div></div>' +
+      '<div class="tile"><div class="k">المقبوض هذا الشهر</div><div class="v">' + fmt(collected) + '</div><div class="s">' + esc(S.cur) + ' · ' + monthLabel(m) + '</div></div>' +
+      '<div class="tile"><div class="k">المتبقي هذا الشهر</div><div class="v">' + fmt(remaining) + '</div><div class="s">' + esc(S.cur) + ' · ' + late.length + ' طفل</div></div></div>';
+    h += '<section class="panel"><h2 class="section-title">متأخرون بالدفع</h2>';
+    if (!late.length) h += '<p class="hint">' + (due ? 'كل الأقساط مدفوعة لهذا الشهر.' : 'ما في أقساط مسجلة لهذا الشهر.') + '</p>';
+    else {
+      h += '<ul class="list" style="margin-top:10px">' + late.slice(0, 6).map(function (x) {
+        return '<li class="row"><div class="who"><b>' + esc(x.c.name) + '</b><span class="sub num">المتبقي ' + fmt(x.rem) + ' ' + esc(S.cur) + '</span></div><div class="actions">' + pill(statusOf(x.c, m)) + waLink(x.c, x.rem, m) + '</div></li>';
+      }).join('') + '</ul>';
+      if (late.length > 6) h += '<p class="hint" style="margin-top:8px">و ' + (late.length - 6) + ' آخرين في تبويب الأقساط.</p>';
+    }
+    h += '</section>';
+    var counts = SECTIONS.map(function (s) { return { s: s, n: S.children.filter(function (c) { return c.sections.indexOf(s.id) > -1; }).length }; });
+    var max = Math.max.apply(null, counts.map(function (x) { return x.n; }).concat(1));
+    h += '<section class="panel"><h2 class="section-title">الأطفال حسب القسم</h2><div class="bars">' + counts.map(function (x) {
+      return '<div class="bar"><span>' + esc(x.s.label) + '</span><span class="track"><i style="width:' + Math.round(x.n / max * 100) + '%"></i></span><b class="num">' + x.n + '</b></div>';
+    }).join('') + '</div></section>';
+    return h;
+  }
+
+  function secOptions(sel, allLabel) {
+    return '<option value="">' + allLabel + '</option>' + SECTIONS.map(function (s) {
+      return '<option value="' + s.id + '"' + (sel === s.id ? ' selected' : '') + '>' + esc(s.label) + '</option>';
+    }).join('');
+  }
+
+  function childForm() {
+    var c = ui.edit === 'new' ? { name: '', age: '', sections: [], fee: '', guardian: '', phone: '', notes: '' } : kidById(ui.edit);
+    if (!c) return '';
+    return '<form class="panel" data-form="child"><h2 class="section-title">' + (ui.edit === 'new' ? 'طفل جديد' : 'تعديل بيانات الطفل') + '</h2>' +
+      '<div class="form-grid">' +
+      '<label class="f">الاسم *<input type="text" id="f-name" name="name" required value="' + esc(c.name) + '"></label>' +
+      '<label class="f">العمر *<input type="number" id="f-age" name="age" required min="1" max="99" inputmode="numeric" value="' + esc(c.age) + '"></label>' +
+      '<div class="f full">الأقسام والدورات<div class="checks">' + SECTIONS.map(function (s) {
+        return '<label><input type="checkbox" name="sec" value="' + s.id + '"' + (c.sections.indexOf(s.id) > -1 ? ' checked' : '') + '> ' + esc(s.label) + '</label>';
+      }).join('') + '</div></div>' +
+      '<label class="f">القسط الشهري (' + esc(S.cur) + ')<input type="number" id="f-fee" name="fee" min="0" inputmode="numeric" value="' + esc(c.fee) + '"></label>' +
+      '<label class="f">اسم ولي الأمر<input type="text" id="f-guardian" name="guardian" value="' + esc(c.guardian) + '"></label>' +
+      '<label class="f full">هاتف ولي الأمر<input type="tel" id="f-phone" name="phone" inputmode="tel" placeholder="09xxxxxxxx" value="' + esc(c.phone) + '"></label>' +
+      '<label class="f full">ملاحظات<textarea id="f-notes" name="notes" style="direction:rtl;text-align:right;font-family:inherit;font-size:16px;min-height:80px">' + esc(c.notes) + '</textarea></label>' +
+      '</div><div class="actions" style="margin-top:14px"><button class="btn" type="submit">حفظ</button><button class="btn ghost" type="button" data-act="cancel-edit">إلغاء</button></div></form>';
+  }
+
+  function vChildren() {
+    return '<div class="toolbar"><input type="search" id="q" placeholder="ابحث بالاسم أو الهاتف" value="' + esc(ui.q) + '" aria-label="بحث">' +
+      '<select id="secF" aria-label="القسم">' + secOptions(ui.sec, 'كل الأقسام') + '</select>' +
+      '<button class="btn" data-act="add">+ طفل جديد</button></div>' +
+      (ui.edit !== null ? childForm() : '') + '<div id="count" class="hint"></div><ul id="childList" class="list"></ul>';
+  }
+  function listKids() {
+    var q = ui.q.trim().toLowerCase();
+    var rows = S.children.filter(function (c) {
+      if (ui.sec && c.sections.indexOf(ui.sec) < 0) return false;
+      if (!q) return true;
+      return (c.name + ' ' + c.guardian + ' ' + c.phone).toLowerCase().indexOf(q) > -1;
+    });
+    $('#count').textContent = rows.length + ' من ' + S.children.length + ' طفل';
+    var ul = $('#childList');
+    if (!rows.length) {
+      ul.innerHTML = '<li class="empty">' + (S.children.length ? 'ما في نتائج مطابقة للبحث.' : 'ما في أطفال مسجلين بعد. اضغط «طفل جديد» لتضيف أول طفل.') + '</li>';
+      return;
+    }
+    ul.innerHTML = rows.map(function (c) {
+      var sure = ui.delId === c.id;
+      return '<li class="row"><div class="who"><b>' + esc(c.name) + '</b> <span class="sub" style="display:inline">· ' + c.age + ' سنوات</span>' + chips(c) +
+        '<span class="sub" style="margin-top:4px">' + (c.guardian ? esc(c.guardian) : 'بدون اسم ولي أمر') + (c.phone ? ' · <span dir="ltr" class="num">' + esc(c.phone) + '</span>' : '') + (c.fee ? ' · القسط ' + fmt(c.fee) + ' ' + esc(S.cur) : '') + '</span>' +
+        (c.notes ? '<span class="sub">ملاحظة: ' + esc(c.notes) + '</span>' : '') + '</div>' +
+        '<div class="actions"><button class="btn ghost sm" data-act="edit" data-id="' + c.id + '">تعديل</button>' +
+        (sure ? '<button class="btn danger sure sm" data-act="del-ok" data-id="' + c.id + '">تأكيد الحذف</button><button class="btn ghost sm" data-act="del-no">تراجع</button>'
+          : '<button class="btn danger sm" data-act="del" data-id="' + c.id + '">حذف</button>') + '</div></li>';
+    }).join('');
+  }
+
+  function vAtt() {
+    var a = S.att[ui.attDate] || {};
+    var kids = S.children.filter(function (c) { return !ui.attSec || c.sections.indexOf(ui.attSec) > -1; });
+    var p = 0, ab = 0;
+    kids.forEach(function (c) { if (a[c.id] === 'p') p++; else if (a[c.id] === 'a') ab++; });
+    var h = '<div class="panel"><div class="month-nav"><button class="btn ghost sm" data-act="day-prev">اليوم السابق</button><strong>' + dayLabel(ui.attDate) + '</strong><button class="btn ghost sm" data-act="day-next">اليوم التالي</button></div>' +
+      '<div class="toolbar" style="margin-top:12px"><input type="date" id="attDate" value="' + ui.attDate + '" aria-label="التاريخ"><select id="attSec" aria-label="القسم">' + secOptions(ui.attSec, 'كل الأقسام') + '</select>' +
+      '<button class="btn sm" data-act="att-all"' + (kids.length ? '' : ' disabled') + '>الكل حاضر</button></div>' +
+      '<p class="hint num" style="margin-top:10px">حاضر ' + p + ' · غائب ' + ab + ' · لم يُسجَّل ' + (kids.length - p - ab) + '</p></div>';
+    if (!kids.length) return h + '<div class="empty">' + (S.children.length ? 'ما في أطفال بهذا القسم.' : 'سجّل الأطفال أولاً من تبويب «الأطفال».') + '</div>';
+    return h + '<ul class="list">' + kids.map(function (c) {
+      return '<li class="row"><div class="who"><b>' + esc(c.name) + '</b>' + chips(c) + '</div><div class="seg" role="group" aria-label="حضور ' + esc(c.name) + '">' +
+        '<button data-act="att" data-id="' + c.id + '" data-v="p" aria-pressed="' + (a[c.id] === 'p') + '">حاضر</button>' +
+        '<button data-act="att" data-id="' + c.id + '" data-v="a" aria-pressed="' + (a[c.id] === 'a') + '">غائب</button></div></li>';
+    }).join('') + '</ul>';
+  }
+
+  function vFees() {
+    var m = ui.feeM, due = 0, collected = 0, rem = 0;
+    var kids = S.children.filter(function (c) { return +c.fee > 0; });
+    kids.forEach(function (c) { var d = +c.fee, p = paidFor(c.id, m); due += d; collected += p; if (p < d) rem += d - p; });
+    var skipped = S.children.length - kids.length;
+    var h = '<div class="panel"><div class="month-nav"><button class="btn ghost sm" data-act="fee-prev">الشهر السابق</button><strong>' + monthLabel(m) + '</strong><button class="btn ghost sm" data-act="fee-next">الشهر التالي</button></div></div>' +
+      '<div class="tiles"><div class="tile"><div class="k">المستحق</div><div class="v">' + fmt(due) + '</div><div class="s">' + esc(S.cur) + '</div></div>' +
+      '<div class="tile"><div class="k">المقبوض</div><div class="v">' + fmt(collected) + '</div><div class="s">' + esc(S.cur) + '</div></div></div>' +
+      '<div class="tile"><div class="k">المتبقي</div><div class="v">' + fmt(rem) + '</div><div class="s">' + esc(S.cur) + '</div></div>';
+    if (!kids.length) return h + '<div class="empty">ما في أطفال لهم قسط شهري. حدّد القسط عند تسجيل الطفل أو تعديله.</div>';
+    h += '<ul class="list">' + kids.map(function (c) {
+      var d = +c.fee, p = paidFor(c.id, m), r = Math.max(0, d - p), st = statusOf(c, m);
+      var pays = S.pay.filter(function (x) { return x.cid === c.id && x.m === m; });
+      var x = '<li class="row"><div class="who"><b>' + esc(c.name) + '</b><span class="sub num">القسط ' + fmt(d) + ' · مدفوع ' + fmt(p) + ' · متبقٍ ' + fmt(r) + ' ' + esc(S.cur) + '</span></div>' +
+        '<div class="actions">' + pill(st) + '<button class="btn sm" data-act="pay-open" data-id="' + c.id + '">تسجيل دفعة</button>' + (r > 0 ? waLink(c, r, m) : '') + '</div>';
+      if (ui.paying === c.id) {
+        x += '<form class="payform" data-form="pay" data-id="' + c.id + '"><input type="number" id="payAmt" name="amt" min="1" inputmode="numeric" required value="' + (r || '') + '" aria-label="المبلغ"><button class="btn" type="submit">حفظ الدفعة</button><button class="btn ghost" type="button" data-act="pay-cancel">إلغاء</button></form>';
+      }
+      if (pays.length) {
+        x += '<div class="pays">' + pays.map(function (y) {
+          var dd = parseDay(y.date);
+          var lbl = isNaN(dd) ? '' : dd.getDate() + ' ' + MONTHS[dd.getMonth()];
+          return '<div><span class="num">' + lbl + ' · ' + fmt(y.amt) + ' ' + esc(S.cur) + '</span>' +
+            (ui.delPay === y.id ? '<span class="actions"><button class="btn danger sure sm" data-act="pay-del-ok" data-id="' + y.id + '">تأكيد الحذف</button><button class="btn ghost sm" data-act="pay-del-no">تراجع</button></span>'
+              : '<button class="btn danger sm" data-act="pay-del" data-id="' + y.id + '">حذف</button>') + '</div>';
+        }).join('') + '</div>';
+      }
+      return x + '</li>';
+    }).join('') + '</ul>';
+    if (skipped) h += '<p class="hint">' + skipped + ' طفل بدون قسط شهري ما ظهروا هنا.</p>';
+    return h;
+  }
+
+  function vData() {
+    return '<section class="panel"><h2 class="section-title">العملة</h2><p class="hint">تظهر بجانب كل المبالغ.</p><div class="toolbar" style="margin-top:10px"><input type="text" id="cur" value="' + esc(S.cur) + '" maxlength="12" aria-label="اسم العملة" style="width:160px"></div></section>' +
+      '<section class="panel"><h2 class="section-title">نسخة احتياطية</h2><p class="hint">البيانات محفوظة على هذا المتصفح فقط، وبتضيع إذا مسحت بيانات المتصفح. انسخ هذا النص واحفظه في مكان آمن (ملاحظات أو واتساب لنفسك).</p>' +
+      '<textarea id="backupOut" readonly style="margin-top:10px" aria-label="النسخة الاحتياطية">' + esc(JSON.stringify(S)) + '</textarea>' +
+      '<div class="actions" style="margin-top:10px"><button class="btn" data-act="copy">نسخ</button></div></section>' +
+      '<section class="panel"><h2 class="section-title">استرجاع نسخة</h2><p class="hint">الصق النص المحفوظ هنا. هذا بيستبدل كل البيانات الحالية.</p>' +
+      '<textarea id="imp" style="margin-top:10px" placeholder="الصق النسخة الاحتياطية" aria-label="استرجاع"></textarea>' +
+      '<div class="actions" style="margin-top:10px"><button class="btn" data-act="import">استرجاع</button></div></section>' +
+      '<section class="panel"><h2 class="section-title">مسح كل البيانات</h2><p class="hint">بيحذف كل الأطفال والحضور والدفعات من هذا المتصفح.</p><div class="actions" style="margin-top:10px">' +
+      (ui.reset ? '<button class="btn danger sure" data-act="reset-ok">تأكيد المسح</button><button class="btn ghost" data-act="reset-no">تراجع</button>' : '<button class="btn danger" data-act="reset">مسح كل البيانات</button>') + '</div></section>';
+  }
+
+  function render() {
+    document.querySelectorAll('.tab').forEach(function (a) {
+      var on = a.getAttribute('data-tab') === ui.tab;
+      a.classList.toggle('on', on);
+      if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    var views = { home: vHome, children: vChildren, attendance: vAtt, fees: vFees, data: vData };
+    $('#view').innerHTML = notices() + views[ui.tab]();
+    if (ui.tab === 'children') listKids();
+  }
+
+  /* ---------- actions ---------- */
+  function setAtt(id, v) {
+    var a = S.att[ui.attDate] || (S.att[ui.attDate] = {});
+    if (a[id] === v) delete a[id]; else a[id] = v;
+    if (!Object.keys(a).length) delete S.att[ui.attDate];
+    save(); render();
+  }
+  function act(name, b) {
+    var id = b.getAttribute('data-id') ? +b.getAttribute('data-id') : null;
+    switch (name) {
+      case 'clear-demo': S = { demo: false, cur: S.cur, children: [], att: {}, pay: [], nid: 1 }; save(); render(); toast('تم مسح البيانات التجريبية'); break;
+      case 'add': ui.edit = 'new'; render(); { var f = $('#f-name'); if (f) f.focus(); } break;
+      case 'edit': ui.edit = id; render(); { var g = $('#f-name'); if (g) g.focus(); } break;
+      case 'cancel-edit': ui.edit = null; render(); break;
+      case 'del': ui.delId = id; listKids(); break;
+      case 'del-no': ui.delId = null; listKids(); break;
+      case 'del-ok':
+        S.children = S.children.filter(function (c) { return c.id !== id; });
+        S.pay = S.pay.filter(function (p) { return p.cid !== id; });
+        Object.keys(S.att).forEach(function (d) { delete S.att[d][id]; if (!Object.keys(S.att[d]).length) delete S.att[d]; });
+        ui.delId = null; save(); render(); toast('تم حذف الطفل'); break;
+      case 'att': setAtt(id, b.getAttribute('data-v')); break;
+      case 'att-all':
+        var a = S.att[ui.attDate] || (S.att[ui.attDate] = {});
+        S.children.forEach(function (c) { if (!ui.attSec || c.sections.indexOf(ui.attSec) > -1) a[c.id] = 'p'; });
+        save(); render(); break;
+      case 'day-prev': case 'day-next':
+        var d = parseDay(ui.attDate); d.setDate(d.getDate() + (name === 'day-next' ? 1 : -1)); ui.attDate = dkey(d); render(); break;
+      case 'fee-prev': ui.feeM = shiftMonth(ui.feeM, -1); ui.paying = null; render(); break;
+      case 'fee-next': ui.feeM = shiftMonth(ui.feeM, 1); ui.paying = null; render(); break;
+      case 'pay-open': ui.paying = id; render(); { var pa = $('#payAmt'); if (pa) pa.focus(); } break;
+      case 'pay-cancel': ui.paying = null; render(); break;
+      case 'pay-del': ui.delPay = id; render(); break;
+      case 'pay-del-no': ui.delPay = null; render(); break;
+      case 'pay-del-ok': S.pay = S.pay.filter(function (p) { return p.id !== id; }); ui.delPay = null; save(); render(); toast('تم حذف الدفعة'); break;
+      case 'copy': {
+        var ta = $('#backupOut'); ta.focus(); ta.select();
+        var done = function () { toast('تم نسخ النسخة الاحتياطية'); };
+        var fail = function () { toast('حدّد النص وانسخه يدوياً'); };
+        try { navigator.clipboard.writeText(ta.value).then(done, fail); } catch (e) { fail(); }
+        break;
+      }
+      case 'import': {
+        var txt = $('#imp').value.trim();
+        try {
+          var o = JSON.parse(txt);
+          if (!o || !Array.isArray(o.children) || !Array.isArray(o.pay)) throw new Error('bad');
+          S = norm(o); save(); ui.edit = null; render(); toast('تم استرجاع النسخة');
+        } catch (e) { toast('النص غير صحيح. تأكد أنك نسخته كاملاً'); }
+        break;
+      }
+      case 'reset': ui.reset = true; render(); break;
+      case 'reset-no': ui.reset = false; render(); break;
+      case 'reset-ok': S = { demo: false, cur: S.cur, children: [], att: {}, pay: [], nid: 1 }; ui.reset = false; save(); render(); toast('تم مسح كل البيانات'); break;
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]');
+    if (b) act(b.getAttribute('data-act'), b);
+  });
+  document.addEventListener('input', function (e) {
+    if (e.target.id === 'q') { ui.q = e.target.value; listKids(); }
+  });
+  document.addEventListener('change', function (e) {
+    var t = e.target;
+    if (t.id === 'secF') { ui.sec = t.value; listKids(); }
+    else if (t.id === 'attSec') { ui.attSec = t.value; render(); }
+    else if (t.id === 'attDate') { if (t.value) { ui.attDate = t.value; render(); } }
+    else if (t.id === 'cur') { S.cur = t.value.trim() || 'ل.س'; save(); toast('تم حفظ العملة'); }
+  });
+  document.addEventListener('submit', function (e) {
+    var f = e.target, kind = f.getAttribute('data-form');
+    if (!kind) return;
+    e.preventDefault();
+    var fd = new FormData(f);
+    if (kind === 'child') {
+      var name = String(fd.get('name') || '').trim(), age = +fd.get('age');
+      if (!name || !(age > 0)) { toast('اكتب الاسم والعمر'); return; }
+      var rec = { name: name, age: age, sections: fd.getAll('sec'), fee: +fd.get('fee') || 0, guardian: String(fd.get('guardian') || '').trim(), phone: String(fd.get('phone') || '').trim(), notes: String(fd.get('notes') || '').trim() };
+      if (ui.edit === 'new') { rec.id = S.nid++; S.children.push(rec); }
+      else { var c = kidById(ui.edit); Object.keys(rec).forEach(function (k) { c[k] = rec[k]; }); }
+      ui.edit = null; save(); render(); toast('تم حفظ بيانات الطفل');
+    } else if (kind === 'pay') {
+      var amt = +fd.get('amt');
+      if (!(amt > 0)) { toast('اكتب مبلغاً صحيحاً'); return; }
+      S.pay.push({ id: S.nid++, cid: +f.getAttribute('data-id'), m: ui.feeM, amt: amt, date: dkey(new Date()) });
+      ui.paying = null; save(); render(); toast('تم تسجيل الدفعة');
+    }
+  });
+  function readHash() {
+    var h = location.hash.slice(1);
+    ui.tab = TABS.indexOf(h) > -1 ? h : 'home';
+  }
+  window.addEventListener('hashchange', function () { readHash(); render(); });
+  readHash(); render();
+})();
+</script>
+
+</body></html>
